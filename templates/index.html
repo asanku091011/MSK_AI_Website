@@ -582,6 +582,108 @@
             outline: none;
             border-color: var(--primary);
         }
+
+        .search-results {
+            margin-top: 1rem;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+
+        .search-result-item {
+            background: var(--background);
+            padding: 1rem;
+            border-radius: 8px;
+            margin-bottom: 0.75rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border: 2px solid transparent;
+        }
+
+        .search-result-item:hover {
+            background: rgba(45, 95, 93, 0.08);
+            border-color: var(--primary);
+            transform: translateX(4px);
+        }
+
+        .search-result-name {
+            font-weight: 600;
+            color: var(--text);
+            font-size: 1.1rem;
+            margin-bottom: 0.25rem;
+        }
+
+        .search-result-info {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+        }
+
+        .search-result-id {
+            font-family: 'Courier New', monospace;
+            background: rgba(45, 95, 93, 0.1);
+            padding: 0.2rem 0.5rem;
+            border-radius: 4px;
+            font-size: 0.85rem;
+            display: inline-block;
+            margin-top: 0.25rem;
+        }
+
+        .no-results {
+            text-align: center;
+            padding: 2rem;
+            color: var(--text-secondary);
+        }
+
+        .patient-confirm {
+            margin-top: 1.5rem;
+            padding: 1.5rem;
+            background: linear-gradient(135deg, rgba(45, 95, 93, 0.05) 0%, rgba(232, 146, 124, 0.05) 100%);
+            border-radius: 12px;
+            border: 2px solid var(--primary);
+            animation: slideIn 0.3s ease;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .patient-confirm.hidden {
+            display: none;
+        }
+
+        .confirm-details {
+            background: white;
+            padding: 1rem;
+            border-radius: 8px;
+            border-left: 3px solid var(--primary);
+        }
+
+        .confirm-detail-row {
+            display: grid;
+            grid-template-columns: 120px 1fr;
+            gap: 1rem;
+            padding: 0.5rem 0;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .confirm-detail-row:last-child {
+            border-bottom: none;
+        }
+
+        .confirm-detail-label {
+            font-weight: 600;
+            color: var(--text-secondary);
+        }
+
+        .confirm-detail-value {
+            color: var(--text);
+        }
     </style>
 </head>
 <body>
@@ -610,11 +712,26 @@
 
                 <!-- Existing Patient Form -->
                 <div class="form-section" id="existing-patient-form">
-                    <label for="patient-select">Select Patient:</label>
-                    <select id="patient-select" class="form-input">
-                        <option value="">Loading patients...</option>
-                    </select>
-                    <button class="btn" id="select-patient-btn" style="margin-top: 1rem; width: 100%;">Continue</button>
+                    <div class="form-group">
+                        <label for="patient-search">Search Patient:</label>
+                        <input type="text" id="patient-search" class="form-input" placeholder="Enter name or patient ID...">
+                        <p style="color: var(--text-secondary); font-size: 0.85rem; margin-top: 0.5rem;">
+                            Type to search by name or ID
+                        </p>
+                    </div>
+                    
+                    <div id="search-results" class="search-results"></div>
+                    
+                    <div id="selected-patient-confirm" class="patient-confirm hidden">
+                        <div class="confirm-header">
+                            <h3 style="color: var(--primary); margin-bottom: 1rem;">Is this you?</h3>
+                        </div>
+                        <div id="confirm-patient-details" class="confirm-details"></div>
+                        <div style="display: flex; gap: 1rem; margin-top: 1.5rem;">
+                            <button class="btn" id="confirm-patient-btn" style="flex: 1;">Yes, this is me</button>
+                            <button class="btn-secondary" id="cancel-selection-btn" style="flex: 1;">No, search again</button>
+                        </div>
+                    </div>
                 </div>
 
                 <!-- New Patient Form -->
@@ -752,8 +869,12 @@
         const newPatientBtn = document.getElementById('new-patient-btn');
         const existingPatientForm = document.getElementById('existing-patient-form');
         const newPatientForm = document.getElementById('new-patient-form');
-        const patientSelect = document.getElementById('patient-select');
-        const selectPatientBtn = document.getElementById('select-patient-btn');
+        const patientSearch = document.getElementById('patient-search');
+        const searchResults = document.getElementById('search-results');
+        const selectedPatientConfirm = document.getElementById('selected-patient-confirm');
+        const confirmPatientDetails = document.getElementById('confirm-patient-details');
+        const confirmPatientBtn = document.getElementById('confirm-patient-btn');
+        const cancelSelectionBtn = document.getElementById('cancel-selection-btn');
         const createPatientBtn = document.getElementById('create-patient-btn');
         const patientInfoCard = document.getElementById('patient-info-card');
         const patientHistoryCard = document.getElementById('patient-history-card');
@@ -762,6 +883,8 @@
 
         let selectedFile = null;
         let currentPatient = null;
+        let allPatients = [];
+        let selectedPatientForConfirm = null;
 
         // Initialize - show patient modal on load
         window.addEventListener('load', () => {
@@ -773,18 +896,130 @@
             try {
                 const response = await fetch('/api/patients');
                 const data = await response.json();
-                
-                patientSelect.innerHTML = '<option value="">Select a patient</option>';
-                data.patients.forEach(patient => {
-                    const option = document.createElement('option');
-                    option.value = patient.patient_id;
-                    option.textContent = `${patient.name} (ID: ${patient.patient_id})`;
-                    patientSelect.appendChild(option);
-                });
+                allPatients = data.patients;
             } catch (error) {
                 showError('Failed to load patients');
             }
         }
+
+        // Search functionality
+        patientSearch.addEventListener('input', (e) => {
+            const searchTerm = e.target.value.toLowerCase().trim();
+            
+            if (searchTerm.length === 0) {
+                searchResults.innerHTML = '';
+                selectedPatientConfirm.classList.add('hidden');
+                return;
+            }
+
+            // Filter patients by name or ID
+            const filtered = allPatients.filter(patient => 
+                patient.name.toLowerCase().includes(searchTerm) ||
+                patient.patient_id.toLowerCase().includes(searchTerm)
+            );
+
+            displaySearchResults(filtered);
+            selectedPatientConfirm.classList.add('hidden');
+        });
+
+        function displaySearchResults(patients) {
+            if (patients.length === 0) {
+                searchResults.innerHTML = '<div class="no-results">No patients found. Try a different search term.</div>';
+                return;
+            }
+
+            let html = '';
+            patients.forEach(patient => {
+                html += `
+                    <div class="search-result-item" data-patient-id="${patient.patient_id}">
+                        <div class="search-result-name">${patient.name}</div>
+                        <div class="search-result-info">
+                            DOB: ${patient.date_of_birth} | Gender: ${patient.gender}
+                        </div>
+                        <div class="search-result-id">ID: ${patient.patient_id}</div>
+                    </div>
+                `;
+            });
+
+            searchResults.innerHTML = html;
+
+            // Add click handlers to search results
+            document.querySelectorAll('.search-result-item').forEach(item => {
+                item.addEventListener('click', () => {
+                    const patientId = item.dataset.patientId;
+                    const patient = allPatients.find(p => p.patient_id === patientId);
+                    showConfirmation(patient);
+                });
+            });
+        }
+
+        function showConfirmation(patient) {
+            selectedPatientForConfirm = patient;
+            
+            const detailsHTML = `
+                <div class="confirm-detail-row">
+                    <span class="confirm-detail-label">Name:</span>
+                    <span class="confirm-detail-value">${patient.name}</span>
+                </div>
+                <div class="confirm-detail-row">
+                    <span class="confirm-detail-label">Patient ID:</span>
+                    <span class="confirm-detail-value">${patient.patient_id}</span>
+                </div>
+                <div class="confirm-detail-row">
+                    <span class="confirm-detail-label">Date of Birth:</span>
+                    <span class="confirm-detail-value">${patient.date_of_birth}</span>
+                </div>
+                <div class="confirm-detail-row">
+                    <span class="confirm-detail-label">Gender:</span>
+                    <span class="confirm-detail-value">${patient.gender}</span>
+                </div>
+                <div class="confirm-detail-row">
+                    <span class="confirm-detail-label">Email:</span>
+                    <span class="confirm-detail-value">${patient.email}</span>
+                </div>
+                <div class="confirm-detail-row">
+                    <span class="confirm-detail-label">Phone:</span>
+                    <span class="confirm-detail-value">${patient.phone}</span>
+                </div>
+            `;
+
+            confirmPatientDetails.innerHTML = detailsHTML;
+            selectedPatientConfirm.classList.remove('hidden');
+            searchResults.innerHTML = '';
+        }
+
+        // Confirm patient selection
+        confirmPatientBtn.addEventListener('click', async () => {
+            if (!selectedPatientForConfirm) return;
+
+            try {
+                const response = await fetch(`/api/patient/${selectedPatientForConfirm.patient_id}`);
+                const data = await response.json();
+                
+                if (response.ok) {
+                    currentPatient = data.patient;
+                    displayPatientInfo(data);
+                    patientModal.classList.add('hidden');
+                    
+                    // Reset search
+                    patientSearch.value = '';
+                    selectedPatientConfirm.classList.add('hidden');
+                    selectedPatientForConfirm = null;
+                } else {
+                    showError(data.error);
+                }
+            } catch (error) {
+                showError('Failed to load patient data');
+            }
+        });
+
+        // Cancel selection and search again
+        cancelSelectionBtn.addEventListener('click', () => {
+            selectedPatientConfirm.classList.add('hidden');
+            selectedPatientForConfirm = null;
+            patientSearch.value = '';
+            patientSearch.focus();
+        });
 
         // Toggle between new/existing patient forms
         existingPatientBtn.addEventListener('click', () => {
@@ -792,6 +1027,9 @@
             newPatientBtn.classList.remove('active');
             existingPatientForm.classList.remove('hidden');
             newPatientForm.classList.add('hidden');
+            
+            // Focus on search input
+            setTimeout(() => patientSearch.focus(), 100);
         });
 
         newPatientBtn.addEventListener('click', () => {
@@ -799,30 +1037,6 @@
             existingPatientBtn.classList.remove('active');
             newPatientForm.classList.remove('hidden');
             existingPatientForm.classList.add('hidden');
-        });
-
-        // Select existing patient
-        selectPatientBtn.addEventListener('click', async () => {
-            const patientId = patientSelect.value;
-            if (!patientId) {
-                showError('Please select a patient');
-                return;
-            }
-
-            try {
-                const response = await fetch(`/api/patient/${patientId}`);
-                const data = await response.json();
-                
-                if (response.ok) {
-                    currentPatient = data.patient;
-                    displayPatientInfo(data);
-                    patientModal.classList.add('hidden');
-                } else {
-                    showError(data.error);
-                }
-            } catch (error) {
-                showError('Failed to load patient data');
-            }
         });
 
         // Create new patient
@@ -931,8 +1145,18 @@
             uploadCard.style.display = 'none';
             previewContainer.classList.remove('active');
             results.classList.remove('active');
+            
+            // Reset search state
+            patientSearch.value = '';
+            searchResults.innerHTML = '';
+            selectedPatientConfirm.classList.add('hidden');
+            selectedPatientForConfirm = null;
+            
             patientModal.classList.remove('hidden');
             loadPatients();
+            
+            // Focus on search after modal opens
+            setTimeout(() => patientSearch.focus(), 100);
         });
 
         // Click to upload
