@@ -1,15 +1,52 @@
 # 🏥 Breast Cancer Detection Web Application
 
-A beautiful, professional web interface for breast cancer mammogram analysis using AI.
+A beautiful, professional web interface for breast cancer mammogram analysis using AI with complete patient management system.
 
 ## 📋 Features
 
 - 🎨 Beautiful, medical-grade UI design
+- 👤 **Patient Management System**
+  - Register new patients
+  - Select existing patients
+  - Track patient history
+  - Store scan results
 - 🖼️ Drag & drop image upload
 - ⚡ Real-time AI predictions
 - 📊 Confidence scores with visual progress bars
+- 💾 **CSV Database Storage** (persists after app restart)
+  - Patients table
+  - Scans table
+  - History table
 - 🔒 100% local - no data leaves your computer
 - 📱 Responsive design for all devices
+
+## 🗄️ Database Structure
+
+The app uses 3 CSV files to store all data:
+
+### 1. **patients.csv**
+- patient_id
+- name
+- date_of_birth
+- gender
+- email
+- phone
+- registration_date
+
+### 2. **scans.csv**
+- scan_id
+- patient_id
+- scan_date
+- result (Normal/Cancer)
+- confidence (%)
+- notes
+
+### 3. **history.csv**
+- history_id
+- patient_id
+- event_type (REGISTRATION, SCAN)
+- event_date
+- description
 
 ## 🚀 Quick Start
 
@@ -39,9 +76,13 @@ Navigate to: **http://localhost:5000**
 
 ```
 breast-cancer-detection/
-├── app.py                 # Flask backend
+├── app.py                 # Flask backend with patient management
 ├── templates/
-│   └── index.html        # Frontend UI
+│   └── index.html        # Frontend UI with patient forms
+├── data/                 # CSV databases (auto-created)
+│   ├── patients.csv      # Patient records
+│   ├── scans.csv         # Scan results
+│   └── history.csv       # Event history
 ├── keras_model.h5        # Your trained model (add this)
 ├── labels.txt            # Class labels (add this)
 └── requirements.txt      # Python dependencies
@@ -49,10 +90,28 @@ breast-cancer-detection/
 
 ## 🎯 How to Use
 
-1. Open the web app in your browser
-2. Click the upload area or drag & drop a mammogram image
-3. Click "Analyze Image"
-4. View the AI predictions with confidence scores
+1. **Open the web app** in your browser
+2. **Select Patient Type:**
+   - **Existing Patient**: Choose from dropdown list
+   - **New Patient**: Fill in registration form (name, DOB, gender, email, phone)
+3. **View Patient History** (if existing patient with previous scans)
+4. **Upload Mammogram Image:**
+   - Click the upload area or drag & drop
+   - Supports JPG, PNG, PGM formats
+5. **Analyze Image:**
+   - Click "Analyze Image" button
+   - View AI predictions with confidence scores
+6. **Add Notes** (optional): Document observations about the scan
+7. **Review History:** See all previous scans and results for the patient
+
+## 📊 Patient Workflow
+
+```
+New Visit → Select/Register Patient → View History → Upload Scan → 
+Analyze → Review Results → Add Notes → Saved to Database
+```
+
+All data persists in CSV files, so patient records are available even after restarting the application!
 
 ## ⚠️ Important Notes
 

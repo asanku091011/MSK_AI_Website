@@ -41,7 +41,7 @@
         .header {
             background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%);
             color: white;
-            padding: 2rem 2rem 4rem;
+            padding: 2rem 2rem 0rem;
             position: relative;
             overflow: hidden;
         }
@@ -100,7 +100,7 @@
 
         .container {
             max-width: 1200px;
-            margin: -3rem auto 0;
+            margin: 2rem auto 0;
             padding: 0 2rem 3rem;
             flex: 1;
         }
@@ -395,6 +395,193 @@
                 padding: 1.5rem;
             }
         }
+
+        /* Modal Styles */
+        .modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.7);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            backdrop-filter: blur(4px);
+        }
+
+        .modal.hidden {
+            display: none;
+        }
+
+        .modal-content {
+            background: var(--surface);
+            border-radius: 16px;
+            padding: 2.5rem;
+            max-width: 500px;
+            width: 90%;
+            max-height: 90vh;
+            overflow-y: auto;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            animation: modalSlideIn 0.3s ease;
+        }
+
+        @keyframes modalSlideIn {
+            from {
+                opacity: 0;
+                transform: translateY(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .patient-type-selector {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        .type-btn {
+            padding: 1rem;
+            border: 2px solid var(--border);
+            background: var(--background);
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-family: 'IBM Plex Sans', sans-serif;
+        }
+
+        .type-btn:hover {
+            border-color: var(--primary);
+            background: rgba(45, 95, 93, 0.05);
+        }
+
+        .type-btn.active {
+            background: var(--primary);
+            color: white;
+            border-color: var(--primary);
+        }
+
+        .form-section {
+            animation: fadeIn 0.3s ease;
+        }
+
+        .form-section.hidden {
+            display: none;
+        }
+
+        .form-group {
+            margin-bottom: 1.25rem;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 500;
+            color: var(--text);
+        }
+
+        .form-input {
+            width: 100%;
+            padding: 0.75rem 1rem;
+            border: 2px solid var(--border);
+            border-radius: 8px;
+            font-size: 1rem;
+            font-family: 'IBM Plex Sans', sans-serif;
+            transition: all 0.3s ease;
+        }
+
+        .form-input:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(45, 95, 93, 0.1);
+        }
+
+        .btn-secondary {
+            background: var(--background);
+            color: var(--text);
+            border: 2px solid var(--border);
+            padding: 0.5rem 1rem;
+            border-radius: 6px;
+            font-size: 0.9rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-family: 'IBM Plex Sans', sans-serif;
+        }
+
+        .btn-secondary:hover {
+            background: var(--border);
+            border-color: var(--text-secondary);
+        }
+
+        .patient-detail {
+            display: flex;
+            gap: 0.5rem;
+            margin-bottom: 0.5rem;
+            font-size: 0.95rem;
+        }
+
+        .patient-detail-label {
+            font-weight: 600;
+            color: var(--text-secondary);
+            min-width: 80px;
+        }
+
+        .patient-detail-value {
+            color: var(--text);
+        }
+
+        .history-item {
+            background: var(--background);
+            padding: 1rem;
+            border-radius: 8px;
+            margin-bottom: 1rem;
+            border-left: 3px solid var(--primary);
+        }
+
+        .history-date {
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+            margin-bottom: 0.25rem;
+        }
+
+        .history-type {
+            font-weight: 600;
+            color: var(--primary);
+            margin-bottom: 0.25rem;
+        }
+
+        .scan-notes {
+            margin-top: 1rem;
+        }
+
+        .scan-notes label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 500;
+        }
+
+        .scan-notes textarea {
+            width: 100%;
+            padding: 0.75rem;
+            border: 2px solid var(--border);
+            border-radius: 8px;
+            font-family: 'IBM Plex Sans', sans-serif;
+            resize: vertical;
+            min-height: 80px;
+        }
+
+        .scan-notes textarea:focus {
+            outline: none;
+            border-color: var(--primary);
+        }
     </style>
 </head>
 <body>
@@ -411,7 +598,84 @@
     </div>
 
     <div class="container">
-        <div class="card">
+        <!-- Patient Selection Modal -->
+        <div class="modal" id="patient-modal">
+            <div class="modal-content">
+                <h2 style="font-family: 'DM Serif Display', serif; color: var(--primary); margin-bottom: 1.5rem;">Patient Information</h2>
+                
+                <div class="patient-type-selector">
+                    <button class="type-btn active" id="existing-patient-btn">Existing Patient</button>
+                    <button class="type-btn" id="new-patient-btn">New Patient</button>
+                </div>
+
+                <!-- Existing Patient Form -->
+                <div class="form-section" id="existing-patient-form">
+                    <label for="patient-select">Select Patient:</label>
+                    <select id="patient-select" class="form-input">
+                        <option value="">Loading patients...</option>
+                    </select>
+                    <button class="btn" id="select-patient-btn" style="margin-top: 1rem; width: 100%;">Continue</button>
+                </div>
+
+                <!-- New Patient Form -->
+                <div class="form-section hidden" id="new-patient-form">
+                    <div class="form-group">
+                        <label for="patient-name">Full Name *</label>
+                        <input type="text" id="patient-name" class="form-input" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="patient-dob">Date of Birth *</label>
+                        <input type="date" id="patient-dob" class="form-input" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="patient-gender">Gender *</label>
+                        <select id="patient-gender" class="form-input" required>
+                            <option value="">Select gender</option>
+                            <option value="Female">Female</option>
+                            <option value="Male">Male</option>
+                            <option value="Other">Other</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="patient-email">Email *</label>
+                        <input type="email" id="patient-email" class="form-input" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="patient-phone">Phone *</label>
+                        <input type="tel" id="patient-phone" class="form-input" required>
+                    </div>
+                    <button class="btn" id="create-patient-btn" style="width: 100%; margin-top: 1rem;">Register Patient</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Patient Info Display -->
+        <div class="card" id="patient-info-card" style="display: none;">
+            <div class="card-body" style="padding: 1.5rem;">
+                <div style="display: flex; justify-content: space-between; align-items: start;">
+                    <div>
+                        <h3 style="font-family: 'DM Serif Display', serif; color: var(--primary); margin-bottom: 0.5rem;">Current Patient</h3>
+                        <div id="patient-details"></div>
+                    </div>
+                    <button class="btn-secondary" id="change-patient-btn">Change Patient</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Patient History Card -->
+        <div class="card" id="patient-history-card" style="display: none;">
+            <div class="card-header">
+                <h2>Patient History</h2>
+                <p style="color: var(--text-secondary); font-size: 0.9rem; margin-top: 0.5rem;">
+                    Previous scans and medical records
+                </p>
+            </div>
+            <div class="card-body">
+                <div id="patient-history-content"></div>
+            </div>
+        </div>
+
+        <div class="card" id="upload-card">
             <div class="card-header">
                 <h2>Upload Mammogram</h2>
                 <p style="color: var(--text-secondary); font-size: 0.9rem; margin-top: 0.5rem;">
@@ -481,8 +745,195 @@
         const loading = document.getElementById('loading');
         const results = document.getElementById('results');
         const errorDiv = document.getElementById('error');
+        
+        // Patient management elements
+        const patientModal = document.getElementById('patient-modal');
+        const existingPatientBtn = document.getElementById('existing-patient-btn');
+        const newPatientBtn = document.getElementById('new-patient-btn');
+        const existingPatientForm = document.getElementById('existing-patient-form');
+        const newPatientForm = document.getElementById('new-patient-form');
+        const patientSelect = document.getElementById('patient-select');
+        const selectPatientBtn = document.getElementById('select-patient-btn');
+        const createPatientBtn = document.getElementById('create-patient-btn');
+        const patientInfoCard = document.getElementById('patient-info-card');
+        const patientHistoryCard = document.getElementById('patient-history-card');
+        const changePatientBtn = document.getElementById('change-patient-btn');
+        const uploadCard = document.getElementById('upload-card');
 
         let selectedFile = null;
+        let currentPatient = null;
+
+        // Initialize - show patient modal on load
+        window.addEventListener('load', () => {
+            loadPatients();
+        });
+
+        // Load all patients
+        async function loadPatients() {
+            try {
+                const response = await fetch('/api/patients');
+                const data = await response.json();
+                
+                patientSelect.innerHTML = '<option value="">Select a patient</option>';
+                data.patients.forEach(patient => {
+                    const option = document.createElement('option');
+                    option.value = patient.patient_id;
+                    option.textContent = `${patient.name} (ID: ${patient.patient_id})`;
+                    patientSelect.appendChild(option);
+                });
+            } catch (error) {
+                showError('Failed to load patients');
+            }
+        }
+
+        // Toggle between new/existing patient forms
+        existingPatientBtn.addEventListener('click', () => {
+            existingPatientBtn.classList.add('active');
+            newPatientBtn.classList.remove('active');
+            existingPatientForm.classList.remove('hidden');
+            newPatientForm.classList.add('hidden');
+        });
+
+        newPatientBtn.addEventListener('click', () => {
+            newPatientBtn.classList.add('active');
+            existingPatientBtn.classList.remove('active');
+            newPatientForm.classList.remove('hidden');
+            existingPatientForm.classList.add('hidden');
+        });
+
+        // Select existing patient
+        selectPatientBtn.addEventListener('click', async () => {
+            const patientId = patientSelect.value;
+            if (!patientId) {
+                showError('Please select a patient');
+                return;
+            }
+
+            try {
+                const response = await fetch(`/api/patient/${patientId}`);
+                const data = await response.json();
+                
+                if (response.ok) {
+                    currentPatient = data.patient;
+                    displayPatientInfo(data);
+                    patientModal.classList.add('hidden');
+                } else {
+                    showError(data.error);
+                }
+            } catch (error) {
+                showError('Failed to load patient data');
+            }
+        });
+
+        // Create new patient
+        createPatientBtn.addEventListener('click', async () => {
+            const patientData = {
+                name: document.getElementById('patient-name').value,
+                dob: document.getElementById('patient-dob').value,
+                gender: document.getElementById('patient-gender').value,
+                email: document.getElementById('patient-email').value,
+                phone: document.getElementById('patient-phone').value
+            };
+
+            // Validate
+            for (const [key, value] of Object.entries(patientData)) {
+                if (!value) {
+                    showError(`Please fill in ${key}`);
+                    return;
+                }
+            }
+
+            try {
+                const response = await fetch('/api/patient/create', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(patientData)
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    // Load the newly created patient
+                    const patientResponse = await fetch(`/api/patient/${data.patient_id}`);
+                    const patientData = await patientResponse.json();
+                    
+                    currentPatient = patientData.patient;
+                    displayPatientInfo(patientData);
+                    patientModal.classList.add('hidden');
+                    
+                    // Clear form
+                    document.getElementById('patient-name').value = '';
+                    document.getElementById('patient-dob').value = '';
+                    document.getElementById('patient-gender').value = '';
+                    document.getElementById('patient-email').value = '';
+                    document.getElementById('patient-phone').value = '';
+                } else {
+                    showError(data.error);
+                }
+            } catch (error) {
+                showError('Failed to create patient');
+            }
+        });
+
+        // Display patient info and history
+        function displayPatientInfo(data) {
+            const { patient, scans, history } = data;
+            
+            // Show patient details
+            const detailsHTML = `
+                <div class="patient-detail">
+                    <span class="patient-detail-label">Name:</span>
+                    <span class="patient-detail-value">${patient.name}</span>
+                </div>
+                <div class="patient-detail">
+                    <span class="patient-detail-label">ID:</span>
+                    <span class="patient-detail-value">${patient.patient_id}</span>
+                </div>
+                <div class="patient-detail">
+                    <span class="patient-detail-label">DOB:</span>
+                    <span class="patient-detail-value">${patient.date_of_birth}</span>
+                </div>
+                <div class="patient-detail">
+                    <span class="patient-detail-label">Gender:</span>
+                    <span class="patient-detail-value">${patient.gender}</span>
+                </div>
+            `;
+            document.getElementById('patient-details').innerHTML = detailsHTML;
+            patientInfoCard.style.display = 'block';
+
+            // Show scan history
+            if (scans.length > 0) {
+                let historyHTML = '<h3 style="margin-bottom: 1rem; color: var(--primary);">Previous Scans</h3>';
+                scans.forEach(scan => {
+                    historyHTML += `
+                        <div class="history-item">
+                            <div class="history-date">${scan.scan_date}</div>
+                            <div class="history-type">Result: ${scan.result} (${scan.confidence}% confidence)</div>
+                            ${scan.notes ? `<p style="margin-top: 0.5rem; color: var(--text-secondary); font-size: 0.9rem;">${scan.notes}</p>` : ''}
+                        </div>
+                    `;
+                });
+                document.getElementById('patient-history-content').innerHTML = historyHTML;
+                patientHistoryCard.style.display = 'block';
+            } else {
+                document.getElementById('patient-history-content').innerHTML = '<p style="color: var(--text-secondary);">No previous scans found.</p>';
+                patientHistoryCard.style.display = 'block';
+            }
+
+            uploadCard.style.display = 'block';
+        }
+
+        // Change patient
+        changePatientBtn.addEventListener('click', () => {
+            currentPatient = null;
+            patientInfoCard.style.display = 'none';
+            patientHistoryCard.style.display = 'none';
+            uploadCard.style.display = 'none';
+            previewContainer.classList.remove('active');
+            results.classList.remove('active');
+            patientModal.classList.remove('hidden');
+            loadPatients();
+        });
 
         // Click to upload
         uploadArea.addEventListener('click', () => fileInput.click());
@@ -539,10 +990,17 @@
 
         // Analyze button
         analyzeBtn.addEventListener('click', async () => {
-            if (!selectedFile) return;
+            if (!selectedFile || !currentPatient) return;
 
             const formData = new FormData();
             formData.append('file', selectedFile);
+            formData.append('patient_id', currentPatient.patient_id);
+            
+            // Get notes if any
+            const notesInput = document.getElementById('scan-notes');
+            if (notesInput) {
+                formData.append('notes', notesInput.value);
+            }
 
             loading.classList.add('active');
             results.classList.remove('active');
@@ -559,6 +1017,10 @@
 
                 if (response.ok) {
                     displayResults(data.predictions);
+                    // Reload patient data to show updated history
+                    const patientResponse = await fetch(`/api/patient/${currentPatient.patient_id}`);
+                    const patientData = await patientResponse.json();
+                    displayPatientInfo(patientData);
                 } else {
                     showError(data.error || 'Analysis failed');
                 }
@@ -589,6 +1051,13 @@
                     </div>
                 `;
             });
+
+            html += `
+                <div class="scan-notes">
+                    <label for="scan-notes">Add notes about this scan:</label>
+                    <textarea id="scan-notes" placeholder="Enter any observations or notes..."></textarea>
+                </div>
+            `;
 
             results.innerHTML = html;
             results.classList.add('active');

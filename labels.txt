@@ -1,2 +1,2 @@
-0 BI-RADS1-Normal
-1 BI-RADS4+5
+0 Non-cancerous
+1 Cancerous
