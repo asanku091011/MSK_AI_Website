@@ -1,5 +1,6 @@
 from flask import Flask, render_template, request, jsonify
 import tensorflow as tf
+import tf_keras
 import numpy as np
 from PIL import Image
 import io
@@ -48,7 +49,7 @@ init_databases()
 print("✓ Databases initialized!")
 
 print("Loading model...")
-model = tf.keras.models.load_model(MODEL_PATH, compile=False)
+model = tf_keras.models.load_model(MODEL_PATH, compile=False)
 print("✓ Model loaded successfully!")
 
 # Load labels
@@ -258,6 +259,6 @@ if __name__ == '__main__':
     print("🏥 Breast Cancer Detection System")
     print("="*60)
     print("\n✓ Server starting...")
-    print("✓ Open your browser and go to: http://localhost:5000")
+    print("✓ Open your browser and go to: http://localhost:5001")
     print("\n" + "="*60 + "\n")
-    app.run(debug=True, host='0.0.0.0', port=5000)
+    app.run(debug=True, host='0.0.0.0', port=5001)
