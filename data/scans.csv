@@ -1,2 +1,3 @@
 scan_id,patient_id,scan_date,result,confidence,notes
 75eb82e0,6e3c3f3a,2026-03-22 14:20:13,Cancerous,74.51,
+76f347c4,6e3c3f3a,2026-04-05 14:29:50,Cancerous,84.12,
